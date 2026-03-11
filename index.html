@@ -61,7 +61,7 @@
     .obs-editor{display:flex;flex-direction:column;gap:.75rem}
     .time-row{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
     .time-row label{font-size:.78rem;color:var(--muted);white-space:nowrap}
-    .time-row input[type=datetime-local]{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:.3rem .55rem;border-radius:5px;font-size:.82rem;width:190px;color-scheme:dark}
+    .time-row input[type=datetime-local]{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:.3rem .55rem;border-radius:5px;font-size:.82rem;width:210px;color-scheme:dark}
     .time-row input[type=number]{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:.3rem .55rem;border-radius:5px;font-size:.82rem;width:90px}
     .time-row input:focus{outline:none;border-color:var(--accent)}
     .time-sep{font-size:.75rem;color:var(--border);white-space:nowrap}
@@ -213,10 +213,10 @@
           <label>Date/heure :</label>
           <button class="step-btn" id="stepMinusBtn" onclick="stepTime(-0.5)" disabled>−½h</button>
           <input type="datetime-local" id="obsDateInput" oninput="onDateInput(this.value)" disabled>
+          <button class="step-btn" id="stepPlusBtn" onclick="stepTime(+0.5)" disabled>+½h</button>
           <span class="time-sep">ou</span>
           <input type="number" id="obsHoursInput" placeholder="heures" step="0.5" min="0"
                  oninput="onHoursInput(this.value)" disabled>
-          <button class="step-btn" id="stepPlusBtn" onclick="stepTime(+0.5)" disabled>+½h</button>
           <span class="time-display" id="obsTimeDisplay"></span>
           <div class="obs-nav">
             <button onclick="navObs(-1)">◀</button>
@@ -357,11 +357,11 @@ function addObs() {
   if (state.observations.length > 0) {
     const last = state.observations[state.observations.length - 1];
     if (last._parsed && last._parsed.type === 'date') {
-      const newDate = new Date(last._parsed.date.getTime() + 24 * 3600000);
+      const newDate = new Date(last._parsed.date.getTime() + 0.5 * 3600000);
       obs._parsed = {type:'date', date: newDate};
       obs.timeStr = newDate.toISOString();
     } else if (last._parsed && last._parsed.type === 'hours') {
-      const newH = (last._parsed.hours || 0) + 24;
+      const newH = (last._parsed.hours || 0) + 0.5;
       obs._parsed = {type:'hours', hours: newH};
       obs.timeStr = String(newH);
     }
@@ -1235,5 +1235,9 @@ function init() {
 
 init();
 </script>
+<footer style="text-align:center;padding:1.5rem;font-size:.72rem;color:var(--muted);border-top:1px solid var(--border);margin-top:2rem">
+  &copy; 2025 — Code généré par <a href="https://claude.ai" style="color:var(--accent);text-decoration:none">Claude</a> (Anthropic) —
+  <a href="https://github.com/arisada/jupiter_lab_js" style="color:var(--accent);text-decoration:none">github.com/arisada/jupiter_lab_js</a>
+</footer>
 </body>
 </html>
