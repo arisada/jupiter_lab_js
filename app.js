@@ -242,7 +242,8 @@ function renderObsList() {
 }
 
 /* ═══════════════ EXAMPLE DATA ═══════════════ */
-function loadExample() {
+function loadExample(key) {
+  key = key || 'ideal';
   state.observations = [];
   const P = {
     io:       {T:42.5,  A:2.95,  phi:0},
@@ -250,23 +251,43 @@ function loadExample() {
     ganymede: {T:171.7, A:7.49,  phi:Math.PI/3},
     callisto: {T:400.5, A:13.17, phi:Math.PI/6},
   };
-  // Observations every 24h (Io needs ~6h resolution, but we use every 6h for first 90h then 24h)
-  const times = [0,6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,120,144,168,192,240,288,336,384,432];
-  times.forEach(t => {
+
+  let times, noiseFn;
+  if (key === 'ideal') {
+    // Dense, regular sampling — clean signal
+    times   = [0,6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,120,144,168,192,240,288,336,384,432];
+    P.io.phi = 0;  P.europa.phi = Math.PI/4;  P.ganymede.phi = Math.PI/3;  P.callisto.phi = Math.PI/6;
+    noiseFn = () => 0;
+  } else if (key === 'sparse') {
+    // 9 irregular observations — different phases so t₀ ≠ ideal
+    times   = [0, 53, 107, 178, 240, 303, 372, 445, 510];
+    P.io.phi = Math.PI*0.7;  P.europa.phi = Math.PI*1.3;  P.ganymede.phi = Math.PI*0.4;  P.callisto.phi = Math.PI*1.1;
+    noiseFn = () => 0;
+  } else if (key === 'noisy') {
+    // 15 regular observations + ±0.6 D.J. deterministic noise (fixed seed), different phases
+    times   = [0, 36, 72, 108, 144, 180, 216, 252, 288, 324, 360, 396, 432, 468, 504];
+    P.io.phi = Math.PI*1.5;  P.europa.phi = Math.PI*0.2;  P.ganymede.phi = Math.PI*1.7;  P.callisto.phi = Math.PI*0.6;
+    let s   = 17;
+    noiseFn = () => {
+      s = (Math.imul(1664525, s) + 1013904223) | 0;
+      return (s / 2147483648) * 0.6;
+    };
+  }
+
+  times.forEach(hr => {
     const obs = makeObs();
-    obs.timeStr   = String(t);
-    obs._parsed   = {type:'hours', hours:t};
-    obs.timeHours = t;
+    obs.timeStr   = String(hr);
+    obs._parsed   = {type:'hours', hours:hr};
+    obs.timeHours = hr;
     SAT_IDS.forEach(id => {
       const {T,A,phi} = P[id];
-      obs.positions[id] = Math.round(A * Math.sin(2*Math.PI*t/T + phi) * 10) / 10;
+      obs.positions[id] = Math.round((A * Math.sin(2*Math.PI*hr/T + phi) + noiseFn()) * 10) / 10;
     });
     state.observations.push(obs);
   });
   selectObs(state.observations[0].id);
   renderObsList();
   drawCanvas();
-  // Auto-set amplitude slider to max |position| for each satellite
   SAT_IDS.forEach(id => setDefaultAmplitude(id));
   updateAllCharts();
 }

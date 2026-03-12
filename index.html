@@ -216,7 +216,13 @@
         </div>
         <div class="obs-actions">
           <button class="btn btn-add" onclick="addObs()" data-i18n="obs.add">+ Ajouter</button>
-          <button class="btn btn-ex"  onclick="loadExample()" data-i18n="obs.example">Charger exemple</button>
+          <select class="btn btn-ex" id="exampleSelect"
+                  onchange="if(this.value){loadExample(this.value);this.selectedIndex=0;}">
+            <option value="" selected data-i18n="obs.example">Charger exemple</option>
+            <option value="ideal"  data-i18n="example.ideal">Idéal (25 obs.)</option>
+            <option value="sparse" data-i18n="example.sparse">Épars (9 obs.)</option>
+            <option value="noisy"  data-i18n="example.noisy">Bruité (15 obs.)</option>
+          </select>
           <button class="btn btn-clr" onclick="clearAll()" data-i18n="obs.clear">Tout effacer</button>
         </div>
       </div>
