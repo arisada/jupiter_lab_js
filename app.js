@@ -423,9 +423,9 @@ function drawCanvas() {
   ctx.fillStyle = '#374151';
   ctx.font = '10px system-ui';
   ctx.textAlign = 'right';
-  ctx.fillText('← Ouest (−)', cx - jupR - 8, cy - 9);
+  ctx.fillText(t('canvas.west'), cx - jupR - 8, cy - 9);
   ctx.textAlign = 'left';
-  ctx.fillText('Est (+) →', cx + jupR + 8, cy - 9);
+  ctx.fillText(t('canvas.east'), cx + jupR + 8, cy - 9);
 
   // Jupiter gradient
   const gj = ctx.createRadialGradient(cx - jupR*0.35, cy - jupR*0.35, jupR*0.1, cx, cy, jupR);

@@ -18,10 +18,10 @@
     header{background:linear-gradient(135deg,#080c22,#130820 50%,#081c0f);border-bottom:1px solid var(--border);padding:1.75rem 1rem;text-align:center;position:relative}
     header h1{font-size:2rem;font-weight:800;color:var(--accent);letter-spacing:-0.02em}
     header p{color:var(--muted);margin-top:.35rem;max-width:600px;margin-inline:auto;line-height:1.5}
-    .lang-switcher{position:absolute;top:1rem;right:1rem;display:flex;gap:.3rem}
-    .lang-btn{background:var(--surf2);border:1px solid var(--border);color:var(--muted);padding:.2rem .55rem;border-radius:4px;cursor:pointer;font-size:.75rem;font-weight:700;transition:all .15s}
-    .lang-btn:hover{color:var(--text)}
-    .lang-btn.active{border-color:var(--accent);color:var(--accent)}
+    .lang-switcher{position:absolute;top:1rem;right:1rem}
+    .lang-switcher select{background:var(--surf2);border:1px solid var(--border);color:var(--muted);padding:.2rem .45rem;border-radius:4px;cursor:pointer;font-size:.78rem;outline:none}
+    .lang-switcher select:hover{color:var(--text)}
+    .lang-switcher select:focus{border-color:var(--accent)}
 
     .container{max-width:1280px;margin:0 auto;padding:1.5rem 1rem 3rem}
 
@@ -164,8 +164,14 @@
 <body>
 <header>
   <div class="lang-switcher">
-    <button class="lang-btn" data-lang="fr" onclick="setLang('fr')">FR</button>
-    <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+    <select id="langSelect" onchange="setLang(this.value)">
+      <option value="fr">Français</option>
+      <option value="en">English</option>
+      <option value="it">Italiano</option>
+      <option value="es">Español</option>
+      <option value="pl">Polski</option>
+      <option value="zh">中文</option>
+    </select>
   </div>
   <h1 data-i18n="header.title">♃ Masse de Jupiter</h1>
   <p data-i18n-html="header.subtitle">Détermination par observation des satellites galiléens et la 3<sup>e</sup> loi de Kepler</p>
