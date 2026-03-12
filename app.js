@@ -641,6 +641,65 @@ function resetAmplitude(satId) {
   updateAnalysisChart(satId);
 }
 
+/* ═══════════════ AUTO-FIT ═══════════════ */
+// Grid search on T; for each T solve 2-parameter linear LS to find optimal A and t₀.
+// Model: x(t) = α·sin(ωt) + β·cos(ωt)  →  A = √(α²+β²), t₀ = T/(2π)·atan2(-β, α)
+function autoFit(satId) {
+  const data   = getAnalysisData(satId);
+  const msgEl  = document.getElementById(`vmsg-${satId}`);
+  if (data.length < 2) {
+    msgEl.className  = 'warn-msg';
+    msgEl.textContent = t('validate.err.nodata');
+    return;
+  }
+
+  const {pMin, pMax} = SAT_CFG[satId];
+  const GRID = 600;
+  let bestR2 = -Infinity, bestT, bestA, bestt0;
+
+  const n    = data.length;
+  const mean = data.reduce((s, d) => s + d.x, 0) / n;
+  const ssTot = data.reduce((s, d) => s + (d.x - mean) ** 2, 0);
+
+  for (let i = 0; i <= GRID; i++) {
+    const T     = pMin + (i / GRID) * (pMax - pMin);
+    const omega = 2 * Math.PI / T;
+    let ss = 0, sc = 0, cc = 0, sy = 0, cy = 0;
+    for (const d of data) {
+      const s = Math.sin(omega * d.t);
+      const c = Math.cos(omega * d.t);
+      ss += s * s;  sc += s * c;  cc += c * c;
+      sy += s * d.x; cy += c * d.x;
+    }
+    const det = ss * cc - sc * sc;
+    if (Math.abs(det) < 1e-12) continue;
+    const alpha = (cc * sy - sc * cy) / det;
+    const beta  = (ss * cy - sc * sy) / det;
+    const A     = Math.sqrt(alpha * alpha + beta * beta);
+    const t0raw = T / (2 * Math.PI) * Math.atan2(-beta, alpha);
+    const t0    = ((t0raw % T) + T) % T;
+    const ssRes = data.reduce((s, d) => s + (d.x - A * Math.sin(omega * (d.t - t0))) ** 2, 0);
+    const r2    = ssTot > 1e-12 ? Math.max(0, 1 - ssRes / ssTot) : 0;
+    if (r2 > bestR2) { bestR2 = r2; bestT = T; bestA = A; bestt0 = t0; }
+  }
+
+  state.sliders[satId].period    = bestT;
+  state.sliders[satId].phase     = bestt0;
+  state.sliders[satId].amplitude = bestA;
+
+  document.getElementById(`Tslider-${satId}`).value     = periodToSlider(bestT, satId);
+  document.getElementById(`Tval-${satId}`).textContent  = bestT.toFixed(1) + ' h';
+  document.getElementById(`phMax-${satId}`).textContent = bestT.toFixed(1) + ' h';
+  document.getElementById(`phSlider-${satId}`).value    = Math.round((bestt0 / bestT) * SLIDER_STEPS);
+  document.getElementById(`phVal-${satId}`).textContent = bestt0.toFixed(1) + ' h';
+  document.getElementById(`Aslider-${satId}`).value     = Math.round(bestA / 20 * SLIDER_STEPS);
+  document.getElementById(`Aval-${satId}`).textContent  = bestA.toFixed(2) + ' D.J.';
+
+  msgEl.className  = bestR2 >= 0.75 ? 'validate-msg' : 'warn-msg';
+  msgEl.textContent = t('autofit.result', {r2: bestR2.toFixed(3)});
+  updateAnalysisChart(satId);
+}
+
 /* ═══════════════ VALIDATE ═══════════════ */
 function validate(satId) {
   const fit   = fitSat(satId);
@@ -868,6 +927,7 @@ function buildAnalysisGrid() {
         </div>
       </div>
       <div class="validate-row">
+        <button class="btn btn-autofit"  onclick="autoFit('${id}')"  data-i18n="autofit.btn">⚡ Auto-ajuster</button>
         <button class="btn btn-validate" onclick="validate('${id}')" data-i18n="validate.btn">✓ Valider</button>
         <span id="vmsg-${id}"></span>
       </div>
