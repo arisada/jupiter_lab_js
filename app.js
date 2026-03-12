@@ -69,6 +69,7 @@ function addObs() {
   const obs = makeObs();
   if (state.observations.length > 0) {
     const last = state.observations[state.observations.length - 1];
+    SAT_IDS.forEach(id => { obs.positions[id] = last.positions[id]; });
     if (last._parsed && last._parsed.type === 'date') {
       const newDate = new Date(last._parsed.date.getTime() + 0.5 * 3600000);
       obs._parsed = {type:'date', date: newDate};
@@ -457,6 +458,8 @@ function canvasUp(e) {
       let dj = Math.round(xToDJ(downX, canvas) * 100) / 100;
       dj = Math.max(-CANVAS_RANGE, Math.min(CANVAS_RANGE, dj));
       obs.positions[state.activeSat] = dj;
+      const nextIdx = (SAT_IDS.indexOf(state.activeSat) + 1) % SAT_IDS.length;
+      setActiveSat(SAT_IDS[nextIdx]);
       drawCanvas();
       renderObsList();
       updateAllCharts();
