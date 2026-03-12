@@ -236,6 +236,70 @@ function clearAll() {
   updateAllCharts();
 }
 
+/* ═══════════════ IMPORT / EXPORT CSV ═══════════════ */
+function exportCSV() {
+  const lines = ['type,time,io,europa,ganymede,callisto'];
+  state.observations.forEach(obs => {
+    let type, time;
+    if (obs._parsed && obs._parsed.type === 'date') {
+      type = 'date';
+      time = formatDateLabel(obs._parsed.date);
+    } else {
+      type = 'hours';
+      time = (obs._parsed && obs._parsed.type === 'hours') ? obs._parsed.hours : '';
+    }
+    const pos = SAT_IDS.map(id => obs.positions[id] !== null ? obs.positions[id] : '').join(',');
+    lines.push(`${type},${time},${pos}`);
+  });
+  const blob = new Blob([lines.join('\n')], {type: 'text/csv'});
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = 'jupiter_observations.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importCSV(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const lines = e.target.result.split(/\r?\n/).filter(l => l.trim() && !l.startsWith('type'));
+    state.observations = [];
+    lines.forEach(line => {
+      const parts = line.split(',');
+      if (parts.length < 6) return;
+      const type = parts[0].trim();
+      const time = parts[1].trim();
+      const obs  = makeObs();
+      if (type === 'date') {
+        const m = time.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
+        if (m) {
+          obs._parsed = {type:'date', date: new Date(+m[1], +m[2]-1, +m[3], +m[4], +m[5])};
+          obs.timeStr = time;
+        }
+      } else {
+        const h = parseFloat(time);
+        if (!isNaN(h)) {
+          obs._parsed = {type:'hours', hours: h};
+          obs.timeStr = String(h);
+        }
+      }
+      SAT_IDS.forEach((id, i) => {
+        const v = parseFloat(parts[2 + i]);
+        obs.positions[id] = isNaN(v) ? null : v;
+      });
+      state.observations.push(obs);
+    });
+    recomputeHours();
+    if (state.observations.length) selectObs(state.observations[0].id);
+    SAT_IDS.forEach(id => setDefaultAmplitude(id));
+    renderObsList();
+    drawCanvas();
+    updateAllCharts();
+  };
+  reader.readAsText(file);
+}
+
 /* ═══════════════ OBS LIST RENDERING ═══════════════ */
 function renderObsList() {
   const el = document.getElementById('obsList');

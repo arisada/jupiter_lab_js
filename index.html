@@ -223,6 +223,11 @@
             <option value="sparse" data-i18n="example.sparse">Épars (9 obs.)</option>
             <option value="noisy"  data-i18n="example.noisy">Bruité (15 obs.)</option>
           </select>
+          <button class="btn btn-ex"  onclick="exportCSV()" data-i18n="obs.export">Exporter CSV</button>
+          <label  class="btn btn-ex"  style="cursor:pointer">
+            <span data-i18n="obs.import">Importer CSV</span>
+            <input type="file" accept=".csv" style="display:none" onchange="importCSV(this.files[0]);this.value=''">
+          </label>
           <button class="btn btn-clr" onclick="clearAll()" data-i18n="obs.clear">Tout effacer</button>
         </div>
       </div>
