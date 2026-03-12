@@ -130,7 +130,6 @@ function selectObs(id) {
   document.getElementById('stepPlusBtn').disabled  = !obs;
   if (obs) {
     if (obs._parsed && obs._parsed.type === 'date') {
-      // Convert UTC timestamp back to local datetime-local string
       const d = obs._parsed.date;
       const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
       dateInp.value  = local;
@@ -188,11 +187,33 @@ function onHoursInput(val) {
   updateAllCharts();
 }
 
+function formatDateLabel(d) {
+  const yyyy = d.getFullYear();
+  const mo   = String(d.getMonth() + 1).padStart(2, '0');
+  const dd   = String(d.getDate()).padStart(2, '0');
+  const hh   = String(d.getHours()).padStart(2, '0');
+  const min  = String(d.getMinutes()).padStart(2, '0');
+  return `${yyyy}-${mo}-${dd} ${hh}:${min}`;
+}
+
+
+function obsTimeLabel(obs) {
+  if (obs._parsed && obs._parsed.type === 'date') return formatDateLabel(obs._parsed.date);
+  if (obs.timeHours !== null) return t('obs.time.fmt', {t: obs.timeHours.toFixed(1)});
+  return obs.timeStr || t('obs.no.time');
+}
+
 function updateTimeDisplay() {
   const obs = getObs();
   const el  = document.getElementById('obsTimeDisplay');
-  if (!obs || obs.timeHours === null) { el.textContent = ''; return; }
-  el.textContent = t('obs.time.fmt', {t: obs.timeHours.toFixed(2)});
+  if (!obs) { el.textContent = ''; return; }
+  if (obs._parsed && obs._parsed.type === 'date' && obs.timeHours !== null) {
+    el.textContent = `${formatDateLabel(obs._parsed.date)}  (${t('obs.time.fmt', {t: obs.timeHours.toFixed(2)})})`;
+  } else if (obs.timeHours !== null) {
+    el.textContent = t('obs.time.fmt', {t: obs.timeHours.toFixed(2)});
+  } else {
+    el.textContent = '';
+  }
 }
 
 function updateObsCounter() {
@@ -224,7 +245,7 @@ function renderObsList() {
     return;
   }
   el.innerHTML = state.observations.map(obs => {
-    const tLabel = obs.timeHours !== null ? t('obs.time.fmt', {t: obs.timeHours.toFixed(1)}) : (obs.timeStr || t('obs.no.time'));
+    const tLabel = obsTimeLabel(obs);
     const minis  = SAT_IDS.map(id => {
       const p = obs.positions[id];
       if (p === null) return '';
