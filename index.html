@@ -15,9 +15,13 @@
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:15px;min-height:100vh}
 
-    header{background:linear-gradient(135deg,#080c22,#130820 50%,#081c0f);border-bottom:1px solid var(--border);padding:1.75rem 1rem;text-align:center}
+    header{background:linear-gradient(135deg,#080c22,#130820 50%,#081c0f);border-bottom:1px solid var(--border);padding:1.75rem 1rem;text-align:center;position:relative}
     header h1{font-size:2rem;font-weight:800;color:var(--accent);letter-spacing:-0.02em}
     header p{color:var(--muted);margin-top:.35rem;max-width:600px;margin-inline:auto;line-height:1.5}
+    .lang-switcher{position:absolute;top:1rem;right:1rem;display:flex;gap:.3rem}
+    .lang-btn{background:var(--surf2);border:1px solid var(--border);color:var(--muted);padding:.2rem .55rem;border-radius:4px;cursor:pointer;font-size:.75rem;font-weight:700;transition:all .15s}
+    .lang-btn:hover{color:var(--text)}
+    .lang-btn.active{border-color:var(--accent);color:var(--accent)}
 
     .container{max-width:1280px;margin:0 auto;padding:1.5rem 1rem 3rem}
 
@@ -159,39 +163,43 @@
 </head>
 <body>
 <header>
-  <h1>♃ Masse de Jupiter</h1>
-  <p>Détermination par observation des satellites galiléens et la 3<sup>e</sup> loi de Kepler</p>
+  <div class="lang-switcher">
+    <button class="lang-btn" data-lang="fr" onclick="setLang('fr')">FR</button>
+    <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+  </div>
+  <h1 data-i18n="header.title">♃ Masse de Jupiter</h1>
+  <p data-i18n-html="header.subtitle">Détermination par observation des satellites galiléens et la 3<sup>e</sup> loi de Kepler</p>
 </header>
 
 <div class="container">
 
   <div class="theory">
     <details open>
-      <summary>Principe physique</summary>
+      <summary data-i18n="theory.summary">Principe physique</summary>
       <div class="body">
-        <p>Les satellites galiléens orbitent selon des cercles. Vus de la Terre, leurs positions projetées sont sinusoïdales :</p>
+        <p data-i18n="theory.p1">Les satellites galiléens orbitent selon des cercles. Vus de la Terre, leurs positions projetées sont sinusoïdales :</p>
         <div class="formula">x(t) = A · sin(2π(t − t₀) / T)</div>
         <ul>
-          <li><strong>A</strong> : demi-grand axe (D.J.) &nbsp;|&nbsp; <strong>T</strong> : période (h) &nbsp;|&nbsp; <strong>t₀</strong> : décalage de phase (h)</li>
+          <li data-i18n-html="theory.params"><strong>A</strong> : demi-grand axe (D.J.) &nbsp;|&nbsp; <strong>T</strong> : période (h) &nbsp;|&nbsp; <strong>t₀</strong> : décalage de phase (h)</li>
         </ul>
-        <p style="margin-top:.6rem">Après ajustement des sliders T et t₀ pour maximiser R², on applique :</p>
+        <p style="margin-top:.6rem" data-i18n="theory.p2">Après ajustement des sliders T et t₀ pour maximiser R², on applique :</p>
         <div class="formula">M<sub>Jup</sub> = 4π² a³ / (G T²)</div>
-        <p style="font-size:.78rem;margin-top:.4rem">Position positive = Est (E), négative = Ouest (O). 1 D.J. = 142 984 km.</p>
+        <p style="font-size:.78rem;margin-top:.4rem" data-i18n="theory.note">Position positive = Est (E), négative = Ouest (O). 1 D.J. = 142 984 km.</p>
       </div>
     </details>
   </div>
 
   <div class="progress-row">
-    <span class="prog-label">Satellites validés :</span>
-    <span class="prog-chip" id="prog-io">      <span class="dot"></span>Io</span>
-    <span class="prog-chip" id="prog-europa">  <span class="dot"></span>Europe</span>
-    <span class="prog-chip" id="prog-ganymede"><span class="dot"></span>Ganymède</span>
-    <span class="prog-chip" id="prog-callisto"><span class="dot"></span>Callisto</span>
+    <span class="prog-label" data-i18n="progress.label">Satellites validés :</span>
+    <span class="prog-chip" id="prog-io">      <span class="dot"></span><span data-i18n="sat.io">Io</span></span>
+    <span class="prog-chip" id="prog-europa">  <span class="dot"></span><span data-i18n="sat.europa">Europe</span></span>
+    <span class="prog-chip" id="prog-ganymede"><span class="dot"></span><span data-i18n="sat.ganymede">Ganymède</span></span>
+    <span class="prog-chip" id="prog-callisto"><span class="dot"></span><span data-i18n="sat.callisto">Callisto</span></span>
   </div>
 
   <!-- ── OBSERVATIONS ── -->
   <div class="section">
-    <div class="section-title">📷 Saisie des observations</div>
+    <div class="section-title" data-i18n="section.obs">📷 Saisie des observations</div>
     <div class="obs-layout">
 
       <!-- List -->
@@ -200,9 +208,9 @@
           <div class="obs-empty">Aucune observation — cliquez « + Ajouter »</div>
         </div>
         <div class="obs-actions">
-          <button class="btn btn-add" onclick="addObs()">+ Ajouter</button>
-          <button class="btn btn-ex"  onclick="loadExample()">Charger exemple</button>
-          <button class="btn btn-clr" onclick="clearAll()">Tout effacer</button>
+          <button class="btn btn-add" onclick="addObs()" data-i18n="obs.add">+ Ajouter</button>
+          <button class="btn btn-ex"  onclick="loadExample()" data-i18n="obs.example">Charger exemple</button>
+          <button class="btn btn-clr" onclick="clearAll()" data-i18n="obs.clear">Tout effacer</button>
         </div>
       </div>
 
@@ -210,13 +218,14 @@
       <div class="obs-editor">
         <!-- Time row -->
         <div class="time-row">
-          <label>Date/heure :</label>
+          <label data-i18n="obs.label.datetime">Date/heure :</label>
           <button class="step-btn" id="stepMinusBtn" onclick="stepTime(-0.5)" disabled>−½h</button>
           <input type="datetime-local" id="obsDateInput" oninput="onDateInput(this.value)" disabled>
           <button class="step-btn" id="stepPlusBtn" onclick="stepTime(+0.5)" disabled>+½h</button>
-          <span class="time-sep">ou</span>
+          <span class="time-sep" data-i18n="obs.or">ou</span>
           <input type="number" id="obsHoursInput" placeholder="heures" step="0.5" min="0"
-                 oninput="onHoursInput(this.value)" disabled>
+                 oninput="onHoursInput(this.value)" disabled
+                 data-i18n-placeholder="obs.hours.placeholder">
           <span class="time-display" id="obsTimeDisplay"></span>
           <div class="obs-nav">
             <button onclick="navObs(-1)">◀</button>
@@ -237,31 +246,31 @@
             ontouchend="canvasUp(event)"></canvas>
         </div>
 
-        <p class="drag-hint" style="margin-top:.4rem">Glissez les lunes pour les repositionner — un clic sur le canvas place la prochaine lune dans l'ordre (Io → Europe → Ganymède → Callisto)</p>
+        <p class="drag-hint" style="margin-top:.4rem" data-i18n="obs.drag.hint">Glissez les lunes pour les repositionner — un clic sur le canvas place la prochaine lune dans l'ordre (Io → Europe → Ganymède → Callisto)</p>
       </div>
     </div>
   </div>
 
   <!-- ── ANALYSIS ── -->
   <div class="section">
-    <div class="section-title">📈 Analyse des orbites — ajustez T et t₀ pour maximiser R²</div>
+    <div class="section-title" data-i18n="section.analysis">📈 Analyse des orbites — ajustez T et t₀ pour maximiser R²</div>
     <div class="analysis-grid" id="analysisGrid"></div>
   </div>
 
   <!-- ── KEPLER ── -->
   <div class="section">
-    <div class="section-title">🔭 3ème Loi de Kepler — Masse de Jupiter</div>
-    <p style="color:var(--muted);font-size:.82rem;margin-bottom:1rem">
+    <div class="section-title" data-i18n="section.kepler">🔭 3ème Loi de Kepler — Masse de Jupiter</div>
+    <p style="color:var(--muted);font-size:.82rem;margin-bottom:1rem" data-i18n="kepler.intro">
       Après validation des 4 satellites, la régression T² = f(a³) donne la pente 4π²/(GM).
     </p>
     <div class="kepler-layout">
       <div class="chart-wrap-kepler"><canvas id="keplerCanvas"></canvas></div>
       <div>
         <div class="result-card">
-          <h3>Paramètres validés</h3>
+          <h3 data-i18n="kepler.params.title">Paramètres validés</h3>
           <table class="res-table">
             <thead><tr>
-              <th>Satellite</th><th>T (h)</th><th>A (D.J.)</th><th>T² (s²)</th><th>a³ (m³)</th><th>M<sub>Jup</sub> (kg)</th>
+              <th data-i18n="kepler.table.sat">Satellite</th><th data-i18n="kepler.table.T">T (h)</th><th data-i18n="kepler.table.A">A (D.J.)</th><th data-i18n="kepler.table.T2">T² (s²)</th><th data-i18n="kepler.table.a3">a³ (m³)</th><th data-i18n-html="kepler.table.M">M<sub>Jup</sub> (kg)</th>
             </tr></thead>
             <tbody id="resBody">
               <tr><td colspan="6" style="color:var(--muted);text-align:center;padding:.5rem;font-size:.78rem">Aucun satellite validé</td></tr>
@@ -269,13 +278,13 @@
           </table>
         </div>
         <div class="mass-card empty" id="massCard">
-          <div class="mlbl">Masse de Jupiter</div>
+          <div class="mlbl" data-i18n="kepler.mass.label">Masse de Jupiter</div>
           <div class="mval" id="massVal">— validez ≥ 2 satellites —</div>
           <div class="mcomp" id="massComp" style="display:none"></div>
           <div class="mr2"   id="massR2"   style="display:none"></div>
         </div>
         <div class="calc-detail" id="calcDetail" style="display:none">
-          <h4>Détail du calcul</h4>
+          <h4 data-i18n="calc.title">Détail du calcul</h4>
           <div id="calcBody"></div>
         </div>
       </div>
@@ -284,6 +293,7 @@
 
 </div><!-- /container -->
 
+<script src="i18n.js"></script>
 <script src="app.js"></script>
 <footer style="text-align:center;padding:1.5rem;font-size:.72rem;color:var(--muted);border-top:1px solid var(--border);margin-top:2rem">
   &copy; 2026 Aris Adamantiadis — Code généré par <a href="https://claude.ai" style="color:var(--accent);text-decoration:none">Claude</a> (Anthropic) —

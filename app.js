@@ -192,7 +192,7 @@ function updateTimeDisplay() {
   const obs = getObs();
   const el  = document.getElementById('obsTimeDisplay');
   if (!obs || obs.timeHours === null) { el.textContent = ''; return; }
-  el.textContent = 't = ' + obs.timeHours.toFixed(2) + ' h';
+  el.textContent = t('obs.time.fmt', {t: obs.timeHours.toFixed(2)});
 }
 
 function updateObsCounter() {
@@ -219,12 +219,12 @@ function clearAll() {
 function renderObsList() {
   const el = document.getElementById('obsList');
   if (!state.observations.length) {
-    el.innerHTML = '<div class="obs-empty">Aucune observation — cliquez « + Ajouter »</div>';
+    el.innerHTML = `<div class="obs-empty">${t('obs.empty')}</div>`;
     updateObsCounter();
     return;
   }
   el.innerHTML = state.observations.map(obs => {
-    const tLabel = obs.timeHours !== null ? `t = ${obs.timeHours.toFixed(1)} h` : (obs.timeStr || '(sans heure)');
+    const tLabel = obs.timeHours !== null ? t('obs.time.fmt', {t: obs.timeHours.toFixed(1)}) : (obs.timeStr || t('obs.no.time'));
     const minis  = SAT_IDS.map(id => {
       const p = obs.positions[id];
       if (p === null) return '';
@@ -458,7 +458,7 @@ function drawCanvas() {
     ctx.fillStyle = '#4b5563';
     ctx.font = '13px system-ui';
     ctx.textAlign = 'center';
-    ctx.fillText('Ajoutez une observation pour placer les lunes', cx, H - 14);
+    ctx.fillText(t('obs.canvas.hint'), cx, H - 14);
     return;
   }
 
@@ -647,19 +647,19 @@ function validate(satId) {
   const msgEl = document.getElementById(`vmsg-${satId}`);
   if (!fit) {
     msgEl.className = 'warn-msg';
-    msgEl.textContent = '⚠ Entrez au moins 2 observations.';
+    msgEl.textContent = t('validate.err.nodata');
     return;
   }
   if (fit.r2 < 0.75) {
     msgEl.className = 'warn-msg';
-    msgEl.textContent = `⚠ R² = ${fit.r2.toFixed(3)} — ajustez T, t₀ et A.`;
+    msgEl.textContent = t('validate.err.r2', {r2: fit.r2.toFixed(3)});
     return;
   }
   state.validated[satId] = true;
   state.validA[satId]    = fit.A;
   state.validT[satId]    = fit.period;
   msgEl.className = 'validate-msg';
-  msgEl.textContent = `✓ T=${fit.period.toFixed(1)}h, A=${fit.A.toFixed(2)} D.J. (R²=${fit.r2.toFixed(3)})`;
+  msgEl.textContent = t('validate.ok', {T: fit.period.toFixed(1), A: fit.A.toFixed(2), r2: fit.r2.toFixed(3)});
   document.getElementById(`prog-${satId}`).classList.add('done');
   updateKeplerSection();
 }
@@ -681,7 +681,7 @@ function updateKeplerSection() {
   // Results table — with individual M_Jup per satellite
   const tbody = document.getElementById('resBody');
   if (!vals.length) {
-    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:.5rem;font-size:.78rem">Aucun satellite validé</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:.5rem;font-size:.78rem">${t('kepler.table.empty')}</td></tr>`;
   } else {
     tbody.innerHTML = vals.map(id => {
       const T_s = state.validT[id] * 3600;
@@ -690,7 +690,7 @@ function updateKeplerSection() {
       const MiExp  = Math.floor(Math.log10(Mi));
       const MiMant = Mi / 10**MiExp;
       return `<tr>
-        <td><span class="sat-dot" style="background:${SAT_CFG[id].color}"></span>${SAT_CFG[id].name}</td>
+        <td><span class="sat-dot" style="background:${SAT_CFG[id].color}"></span>${t('sat.'+id)}</td>
         <td>${state.validT[id].toFixed(1)}</td>
         <td>${state.validA[id].toFixed(2)}</td>
         <td>${fmtSci(T_s**2)}</td>
@@ -711,7 +711,7 @@ function updateKeplerSection() {
 
   if (vals.length < 2) {
     mc.className = 'mass-card empty';
-    mv.textContent = vals.length < 1 ? '— validez ≥ 2 satellites —' : '— validez 1 satellite de plus —';
+    mv.textContent = vals.length < 1 ? t('kepler.mass.empty1') : t('kepler.mass.empty2');
     mcomp.style.display = 'none';
     mr2.style.display   = 'none';
     calcDiv.style.display = 'none';
@@ -732,9 +732,9 @@ function updateKeplerSection() {
   mc.className = 'mass-card';
   mv.textContent = `${mant.toFixed(2)} × 10${sup(exp)} kg`;
   mcomp.style.display = 'block';
-  mcomp.textContent   = `Réf. : 1,898 × 10²⁷ kg  |  Écart : ${err.toFixed(1)} %`;
+  mcomp.textContent   = t('kepler.mass.ref', {err: err.toFixed(1)});
   mr2.style.display   = 'block';
-  mr2.textContent     = `R² Kepler = ${kep.r2.toFixed(4)}`;
+  mr2.textContent     = t('kepler.mass.r2', {r2: kep.r2.toFixed(4)});
 
   // ── Detailed calculation ──
   calcDiv.style.display = 'block';
@@ -745,27 +745,28 @@ function updateKeplerSection() {
   const num4pi2 = 4 * Math.PI**2;
   const denom   = G * slopeVal;
 
+  const sl = t('calc.slope');
   calcBody.innerHTML = `
     <div class="calc-step">
-      <div class="step-title">1 — Régression T² = pente × a³  (passant par l'origine)</div>
-      <div class="calc-line sub">pente = Σ(aᵢ³ · Tᵢ²) / Σ(aᵢ⁶)</div>
-      <div class="calc-line">pente = ${fmtSci(sumNum)} / ${fmtSci(sumDen)}</div>
-      <div class="calc-line result">pente = ${fmtSci(slopeVal)} s²·m⁻³</div>
+      <div class="step-title">${t('calc.step1.title')}</div>
+      <div class="calc-line sub">${t('calc.step1.formula')}</div>
+      <div class="calc-line">${sl} = ${fmtSci(sumNum)} / ${fmtSci(sumDen)}</div>
+      <div class="calc-line result">${sl} = ${fmtSci(slopeVal)} s²·m⁻³</div>
     </div>
     <div class="calc-step">
-      <div class="step-title">2 — Inversion de la 3ème loi de Kepler : T² = (4π²/GM) · a³</div>
-      <div class="calc-line">M = 4π² / (G × pente)</div>
+      <div class="step-title">${t('calc.step2.title')}</div>
+      <div class="calc-line">${t('calc.step2.line1')}</div>
       <div class="calc-line">M = ${num4pi2.toFixed(4)} / (${G.toExponential(3)} × ${fmtSci(slopeVal)})</div>
       <div class="calc-line">M = ${num4pi2.toFixed(4)} / ${denom.toExponential(4)}</div>
       <div class="calc-line result">M = ${mant.toFixed(3)} × 10${sup(exp)} kg</div>
     </div>
     <div class="calc-step">
-      <div class="step-title">3 — Valeurs par satellite (calcul individuel)</div>
+      <div class="step-title">${t('calc.step3.title')}</div>
       ${vals.map(id => {
         const T_s = state.validT[id]*3600, a_m = state.validA[id]*D_JUP_M;
         const Mi = 4*Math.PI**2*a_m**3/(G*T_s**2);
         const e = Math.floor(Math.log10(Mi));
-        return `<div class="calc-line sub">${SAT_CFG[id].name} : 4π²·(${fmtSci(a_m)})³ / (G·(${fmtSci(T_s)})²) = <span style="color:${SAT_CFG[id].color}">${(Mi/10**e).toFixed(2)}×10${sup(e)} kg</span></div>`;
+        return `<div class="calc-line sub">${t('sat.'+id)} : 4π²·(${fmtSci(a_m)})³ / (G·(${fmtSci(T_s)})²) = <span style="color:${SAT_CFG[id].color}">${(Mi/10**e).toFixed(2)}×10${sup(e)} kg</span></div>`;
       }).join('')}
     </div>`;
 }
@@ -825,13 +826,13 @@ function buildAnalysisGrid() {
     <div class="sat-panel" id="panel-${id}">
       <div class="sat-header">
         <span class="sat-dot-lg" style="background:${cfg.color}"></span>
-        <span style="color:${cfg.color}">${cfg.name}</span>
+        <span data-i18n="sat.${id}" style="color:${cfg.color}">${t('sat.'+id)}</span>
       </div>
       <div class="chart-wrap-sm"><canvas id="canvas-${id}"></canvas></div>
       <div class="sliders-area">
         <div class="slider-group">
           <div class="slider-lbl">
-            <span>Période T</span>
+            <span data-i18n="slider.period">Période T</span>
             <span class="slider-val" id="Tval-${id}" style="color:${cfg.color}">${pInit.toFixed(1)} h</span>
           </div>
           <input type="range" min="0" max="${SLIDER_STEPS}" value="${SLIDER_STEPS/2}"
@@ -840,7 +841,7 @@ function buildAnalysisGrid() {
         </div>
         <div class="slider-group">
           <div class="slider-lbl">
-            <span>Décalage t₀</span>
+            <span data-i18n="slider.phase">Décalage t₀</span>
             <span class="slider-val" id="phVal-${id}" style="color:${cfg.color}">0.0 h</span>
           </div>
           <input type="range" min="0" max="${SLIDER_STEPS}" value="0"
@@ -849,10 +850,10 @@ function buildAnalysisGrid() {
         </div>
         <div class="slider-group">
           <div class="slider-lbl">
-            <span>Amplitude A</span>
+            <span data-i18n="slider.amplitude">Amplitude A</span>
             <span style="display:flex;gap:.4rem;align-items:center">
               <span class="slider-val" id="Aval-${id}" style="color:${cfg.color}">1.00 D.J.</span>
-              <button class="btn" style="padding:.1rem .45rem;font-size:.68rem;background:#1e3a5f;color:#93c5fd;border-color:#1d4ed8" onclick="resetAmplitude('${id}')" title="Réinitialiser à max|données|">↺</button>
+              <button class="btn" style="padding:.1rem .45rem;font-size:.68rem;background:#1e3a5f;color:#93c5fd;border-color:#1d4ed8" onclick="resetAmplitude('${id}')" data-i18n-title="slider.reset.title" title="Réinitialiser à max|données|">↺</button>
             </span>
           </div>
           <input type="range" min="0" max="${SLIDER_STEPS}" value="${Math.round(1/20*SLIDER_STEPS)}"
@@ -860,14 +861,14 @@ function buildAnalysisGrid() {
           <div class="slider-limits"><span>0 D.J.</span><span>20 D.J.</span></div>
         </div>
         <div class="fit-stats" style="grid-template-columns:1fr 1fr 1fr 1fr">
-          <div class="stat-box"><div class="slbl">T (h)</div>    <div class="sval" id="sT-${id}"  style="color:${cfg.color}">—</div></div>
-          <div class="stat-box"><div class="slbl">t₀ (h)</div>  <div class="sval" id="sph-${id}" style="color:${cfg.color}">—</div></div>
-          <div class="stat-box"><div class="slbl">A (D.J.)</div><div class="sval" id="sA-${id}"  style="color:${cfg.color}">—</div></div>
-          <div class="stat-box"><div class="slbl">R²</div>       <div class="sval" id="sR2-${id}">—</div></div>
+          <div class="stat-box"><div class="slbl" data-i18n="stat.T">T (h)</div>      <div class="sval" id="sT-${id}"  style="color:${cfg.color}">—</div></div>
+          <div class="stat-box"><div class="slbl" data-i18n="stat.phase">t₀ (h)</div> <div class="sval" id="sph-${id}" style="color:${cfg.color}">—</div></div>
+          <div class="stat-box"><div class="slbl" data-i18n="stat.A">A (D.J.)</div>  <div class="sval" id="sA-${id}"  style="color:${cfg.color}">—</div></div>
+          <div class="stat-box"><div class="slbl" data-i18n="stat.r2">R²</div>        <div class="sval" id="sR2-${id}">—</div></div>
         </div>
       </div>
       <div class="validate-row">
-        <button class="btn btn-validate" onclick="validate('${id}')">✓ Valider</button>
+        <button class="btn btn-validate" onclick="validate('${id}')" data-i18n="validate.btn">✓ Valider</button>
         <span id="vmsg-${id}"></span>
       </div>
     </div>`;
@@ -881,16 +882,16 @@ function initCharts() {
     state.charts[id] = new Chart(ctx, {
       type: 'scatter',
       data: { datasets: [
-        { label:'Observations', data:[], backgroundColor:cfg.color, pointRadius:5, pointHoverRadius:7, order:2 },
-        { label:'Courbe ajustée', data:[], type:'line', borderColor:cfg.color, borderWidth:2, pointRadius:0, fill:false, order:1, tension:0 },
+        { label:t('chart.obs'), data:[], backgroundColor:cfg.color, pointRadius:5, pointHoverRadius:7, order:2 },
+        { label:t('chart.fit'), data:[], type:'line', borderColor:cfg.color, borderWidth:2, pointRadius:0, fill:false, order:1, tension:0 },
         { label:'+A', data:[], type:'line', borderColor:cfg.color+'70', borderWidth:1, borderDash:[4,3], pointRadius:0, fill:false, order:3 },
         { label:'',   data:[], type:'line', borderColor:cfg.color+'70', borderWidth:1, borderDash:[4,3], pointRadius:0, fill:false, order:3 },
       ]},
       options: {
         responsive:true, maintainAspectRatio:false, animation:{duration:80},
         scales: {
-          x:{ title:{display:true,text:'Temps (h)',color:'#64748b'}, grid:{color:'#1c2537'}, ticks:{color:'#64748b'} },
-          y:{ title:{display:true,text:'Position (D.J.)',color:'#64748b'}, grid:{color:'#1c2537'}, ticks:{color:'#64748b'} },
+          x:{ title:{display:true,text:t('chart.time'),color:'#64748b'}, grid:{color:'#1c2537'}, ticks:{color:'#64748b'} },
+          y:{ title:{display:true,text:t('chart.pos'),color:'#64748b'}, grid:{color:'#1c2537'}, ticks:{color:'#64748b'} },
         },
         plugins:{
           legend:{labels:{color:'#94a3b8',usePointStyle:true,pointStyle:'circle',filter:i=>i.text!=='',boxWidth:10}},
@@ -908,26 +909,47 @@ function initCharts() {
   state.keplerChart = new Chart(kctx, {
     type:'scatter',
     data:{datasets:[
-      {label:'Satellites',data:[],backgroundColor:[],pointRadius:8,pointHoverRadius:10,order:2},
-      {label:'Régression (origine)',data:[],type:'line',borderColor:'#f59e0b',borderWidth:2,pointRadius:0,fill:false,order:1},
+      {label:t('chart.satellites'),data:[],backgroundColor:[],pointRadius:8,pointHoverRadius:10,order:2},
+      {label:t('chart.regression'),data:[],type:'line',borderColor:'#f59e0b',borderWidth:2,pointRadius:0,fill:false,order:1},
     ]},
     options:{
       responsive:true, maintainAspectRatio:false, animation:{duration:80},
       scales:{
-        x:{title:{display:true,text:'a³ (×10²⁴ m³)',color:'#64748b'},grid:{color:'#1c2537'},ticks:{color:'#64748b'}},
-        y:{title:{display:true,text:'T² (×10⁸ s²)',color:'#64748b'},grid:{color:'#1c2537'},ticks:{color:'#64748b'}},
+        x:{title:{display:true,text:t('chart.kepler.x'),color:'#64748b'},grid:{color:'#1c2537'},ticks:{color:'#64748b'}},
+        y:{title:{display:true,text:t('chart.kepler.y'),color:'#64748b'},grid:{color:'#1c2537'},ticks:{color:'#64748b'}},
       },
       plugins:{
         legend:{labels:{color:'#94a3b8',usePointStyle:true,pointStyle:'circle',boxWidth:10}},
         tooltip:{callbacks:{label:ctx=>{
           if(ctx.datasetIndex===0){
             const id=SAT_IDS.filter(i=>state.validated[i])[ctx.dataIndex];
-            return id?` ${SAT_CFG[id].name}: a³=${ctx.parsed.x.toFixed(2)}×10²⁴, T²=${ctx.parsed.y.toFixed(2)}×10⁸`:null;
+            return id?` ${t('sat.'+id)}: a³=${ctx.parsed.x.toFixed(2)}×10²⁴, T²=${ctx.parsed.y.toFixed(2)}×10⁸`:null;
           }return null;
         }}},
       },
     },
   });
+}
+
+/* ═══════════════ I18N CHART UPDATE ═══════════════ */
+function updateChartsI18n() {
+  SAT_IDS.forEach(id => {
+    const chart = state.charts[id];
+    if (!chart) return;
+    chart.data.datasets[0].label = t('chart.obs');
+    chart.data.datasets[1].label = t('chart.fit');
+    chart.options.scales.x.title.text = t('chart.time');
+    chart.options.scales.y.title.text = t('chart.pos');
+    chart.update('none');
+  });
+  const kc = state.keplerChart;
+  if (kc) {
+    kc.data.datasets[0].label = t('chart.satellites');
+    kc.data.datasets[1].label = t('chart.regression');
+    kc.options.scales.x.title.text = t('chart.kepler.x');
+    kc.options.scales.y.title.text = t('chart.kepler.y');
+    kc.update('none');
+  }
 }
 
 /* ═══════════════ RESIZE CANVAS ON WINDOW RESIZE ═══════════════ */
@@ -939,6 +961,7 @@ function init() {
   initCharts();
   drawCanvas();
   updateKeplerSection();
+  applyTranslations();
   // Init slider labels
   SAT_IDS.forEach(id => {
     updateStats(id, null);
